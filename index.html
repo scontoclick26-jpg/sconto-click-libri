@@ -1,177 +1,52 @@
-
 <!DOCTYPE html>
 <html lang="it">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="theme-color" content="#fff7ed">
-<title>Sconto Click Libri</title>
-<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<meta name="theme-color" content="#ffffff">
+<title>Panoramica</title>
 <style>
-body{margin:0;padding:22px;background:#fff7ed;color:#292421;font-family:Arial,sans-serif}
-main{max-width:650px;margin:auto}
-header{font-size:21px;font-weight:bold;color:#e96d19;margin-bottom:22px}
-.card{background:white;padding:20px;border-radius:18px;border:1px solid #f2dfce}
-.book{display:flex;gap:18px;align-items:flex-start}
-img{width:105px;max-height:160px;object-fit:contain;border-radius:8px}
-h1{font-size:21px;margin:0 0 9px}
-.author{color:#777}
-h2{font-size:15px;color:#e96d19;margin-top:26px}
-#description{line-height:1.65;white-space:pre-line}
-#status{color:#777;font-size:13px}
-.buy{display:inline-block;background:#f47721;color:white;text-decoration:none;padding:13px 18px;border-radius:10px;font-weight:bold;margin-top:22px}
-footer{text-align:center;color:#888;font-size:12px;margin-top:20px}
-.editor{margin-top:24px;padding-top:18px;border-top:1px solid #f2dfce}
-.editor label{display:block;font-weight:bold;margin:10px 0 7px}
-.editor textarea{box-sizing:border-box;width:100%;min-height:160px;padding:12px;border:1px solid #e5cdbb;border-radius:10px;font:15px Arial;line-height:1.5}
-.editor button{background:#e96d19;color:white;border:0;border-radius:10px;padding:14px;font-weight:bold;margin-top:10px;width:100%}
-#shareStatus{font-size:13px;color:#666;margin-top:10px;line-height:1.5}
+*{box-sizing:border-box}
+body{margin:0;padding:24px;background:#fff;color:#222;font-family:Arial,sans-serif}
+main{max-width:680px;margin:0 auto}
+#description{font-size:17px;line-height:1.75;white-space:pre-line;overflow-wrap:anywhere}
 </style>
 </head>
 <body>
-<main>
-<header>📚 Sconto Click Libri</header>
-
-<section class="card">
-<div class="book">
-<img id="cover" hidden alt="Copertina">
-<div>
-<h1 id="title">Caricamento libro...</h1>
-<div id="author" class="author"></div>
-<p id="status">Ricerca informazioni bibliografiche...</p>
-</div>
-</div>
-
-<h2>📖 PANORAMICA DEL LIBRO</h2>
-<div id="description">Attendi qualche istante...</div>
-
-<div id="editor" class="editor">
-<label for="panoramaInput">✍️ Inserisci la panoramica</label>
-<textarea id="panoramaInput" placeholder="Incolla qui la panoramica del libro..."></textarea>
-<button id="copyShare" type="button">📋 Copia per Telegram</button>
-<div id="shareStatus">Dopo aver copiato, incolla il collegamento nel post Telegram.</div>
-</div>
-
-<a id="buy" class="buy" hidden target="_blank" rel="noopener">🛒 Vai all'offerta Amazon</a>
-</section>
-
-<footer>Sconto Click Libri · Informazioni bibliografiche</footer>
-</main>
-
+<main><div id="description">Caricamento...</div></main>
 <script>
-const tg=window.Telegram?.WebApp;
-if(tg){tg.ready();tg.expand();}
-
 const p=new URLSearchParams(location.search);
-const title=p.get("title")||"";
-const author=p.get("author")||"";
-const asin=p.get("asin")||"";
-const isbn=p.get("isbn")||"";
-const image=p.get("image")||"";
-const panoramica=p.get("panoramica")||"";
-const amazon=p.get("url")||(asin?"https://www.amazon.it/dp/"+encodeURIComponent(asin):"");
+const direct=(p.get("panoramica")||"").trim();
+const isbn=(p.get("isbn")||"").trim().replace(/[- ]/g,"");
+const asin=(p.get("asin")||"").trim();
+const amazon=p.get("url")||"";
+const output=document.getElementById("description");
 
-document.getElementById("title").textContent=title||"Panoramica del libro";
-document.getElementById("author").textContent=author;
-
-if(image){
- document.getElementById("cover").src=image;
- document.getElementById("cover").hidden=false;
-}
-
-if(amazon){
- const b=document.getElementById("buy");
- b.href=amazon;
- b.hidden=false;
-}
-
-async function cercaLibro(){
-
- if(panoramica){
-  document.getElementById("description").textContent=panoramica;
-  document.getElementById("status").textContent="Panoramica del libro.";
-  document.getElementById("editor").hidden=true;
-  return;
- }
-
- const queries=[];
- const codice=(isbn||"").trim().replace(/[- ]/g,"");
-
- if(codice)queries.push("isbn:"+codice);
- if(title)queries.push("intitle:"+title+(author?" inauthor:"+author:""));
-
- if(!codice){
+async function loadPanoramica(){
+ if(direct){output.textContent=direct;return;}
+ const codes=[];
+ if(isbn)codes.push(isbn);
+ if(asin)codes.push(asin);
+ if(amazon){
   try{
-   const link=new URL(amazon);
-   const match=link.pathname.match(/\/(?:dp|gp\/product|gp\/aw\/d)\/([A-Z0-9]{10,13})/i);
-   if(match)queries.unshift("isbn:"+match[1].toUpperCase());
+   const u=new URL(amazon);
+   const m=u.pathname.match(/\/(?:dp|gp\/product|gp\/aw\/d)\/([A-Z0-9]{10,13})/i);
+   if(m)codes.push(m[1].toUpperCase());
   }catch(e){}
  }
-
- for(const q of queries){
+ const unique=[...new Set(codes)];
+ for(const code of unique){
   try{
-   const url="https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent(q)+"&maxResults=10";
-   const r=await fetch(url);
-   if(!r.ok)continue;
-
-   const data=await r.json();
-   const items=data.items||[];
-   const item=items.find(x=>x.volumeInfo?.imageLinks?.thumbnail&&x.volumeInfo?.description)
-    ||items.find(x=>x.volumeInfo?.imageLinks?.thumbnail)
-    ||items.find(x=>x.volumeInfo?.description)
-    ||items[0];
-
-   if(!item)continue;
-
-   const v=item.volumeInfo||{};
-
-   if(!title&&v.title)document.getElementById("title").textContent=v.title;
-   if(!author&&v.authors?.length)document.getElementById("author").textContent=v.authors.join(", ");
-
-   if(image===""&&v.imageLinks?.thumbnail){
-    const img=document.getElementById("cover");
-    img.src=v.imageLinks.thumbnail.replace("http:","https:");
-    img.hidden=false;
-   }
-
-   document.getElementById("description").textContent=
-    v.description||"Descrizione completa non disponibile.";
-
-   document.getElementById("status").textContent=
-    v.description?"Descrizione bibliografica trovata.":"Sinossi non disponibile.";
-
-   return;
+   const response=await fetch("https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent("isbn:"+code)+"&maxResults=10");
+   if(!response.ok)continue;
+   const data=await response.json();
+   const item=(data.items||[]).find(x=>x.volumeInfo?.description);
+   if(item){output.textContent=item.volumeInfo.description;return;}
   }catch(e){}
  }
-
- document.getElementById("description").textContent=
- "Incolla qui la panoramica del libro.";
- document.getElementById("status").textContent="Panoramica inseribile manualmente.";
+ output.textContent="Panoramica non disponibile.";
 }
-
-document.getElementById("copyShare").addEventListener("click",async()=>{
- const text=document.getElementById("panoramaInput").value.trim();
- const status=document.getElementById("shareStatus");
-
- if(!text){
-  status.textContent="Prima incolla la panoramica del libro.";
-  return;
- }
-
- const shareUrl=new URL(location.origin + location.pathname);
- shareUrl.searchParams.set("panoramica",text);
-
- const copyText=shareUrl.toString();
-
- try{
-  await navigator.clipboard.writeText(copyText);
-  status.textContent="✅ Collegamento copiato! Incollalo nel post Telegram.";
- }catch(e){
-  status.textContent="Copia manualmente questo collegamento: "+shareUrl.toString();
- }
-});
-
-cercaLibro();
+loadPanoramica();
 </script>
 </body>
 </html>
