@@ -4,25 +4,77 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#ffffff">
-<title>Panoramica</title>
+<title>Sconto Click Libri – Panoramica</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;padding:24px;background:#fff;color:#222;font-family:Arial,sans-serif}
+body{margin:0;padding:22px;background:#fff;color:#222;font-family:Arial,sans-serif}
 main{max-width:680px;margin:0 auto}
+h1{font-size:23px;margin:0 0 8px}
+p{color:#666;line-height:1.5}
+textarea{width:100%;min-height:300px;padding:14px;border:1px solid #ccc;border-radius:10px;font:16px/1.6 Arial,sans-serif;resize:vertical}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+button{border:0;border-radius:9px;padding:12px 16px;font-size:15px;font-weight:700;cursor:pointer;background:#f58220;color:#fff}
+button.secondary{background:#eee;color:#222}
+#status{min-height:24px;margin-top:12px;color:#287a39;font-size:14px}
 #description{font-size:17px;line-height:1.75;white-space:pre-line;overflow-wrap:anywhere}
+.hidden{display:none}
 </style>
 </head>
 <body>
-<main><div id="description">Caricamento...</div></main>
+<main>
+<section id="editor" class="hidden">
+<h1>📚 Inserisci la panoramica</h1>
+<p>Incolla qui la sinossi del libro. Puoi usare Ctrl+V oppure il pulsante Incolla.</p>
+<textarea id="synopsis" placeholder="Incolla qui la sinossi del libro..."></textarea>
+<div class="actions">
+<button id="paste">📋 Incolla</button>
+<button id="save">💾 Salva</button>
+<button id="copy" class="secondary">Copia testo</button>
+</div>
+<div id="status" role="status"></div>
+</section>
+<section id="reader">
+<div id="description">Caricamento...</div>
+</section>
+</main>
 <script>
-const p=new URLSearchParams(location.search);
-const direct=(p.get("panoramica")||"").trim();
-const isbn=(p.get("isbn")||"").trim().replace(/[- ]/g,"");
-const asin=(p.get("asin")||"").trim();
-const amazon=p.get("url")||"";
-const output=document.getElementById("description");
-
+const params=new URLSearchParams(location.search);
+const editorMode=params.get("inserisci")==="1";
+const editor=document.getElementById("editor");
+const reader=document.getElementById("reader");
+const area=document.getElementById("synopsis");
+const status=document.getElementById("status");
+if(editorMode){
+ editor.classList.remove("hidden");
+ reader.classList.add("hidden");
+ try{area.value=localStorage.getItem("scontoClickSinossiBozza")||"";}catch(e){}
+}
+document.getElementById("paste").addEventListener("click",async()=>{
+ try{
+  area.value=await navigator.clipboard.readText();
+  status.textContent="Testo incollato. Premi Salva per conservarlo.";
+ }catch(e){status.textContent="Usa Ctrl+V nel riquadro per incollare il testo.";}
+});
+document.getElementById("save").addEventListener("click",()=>{
+ const value=area.value.trim();
+ if(!value){status.textContent="Inserisci prima la sinossi.";return;}
+ try{
+  localStorage.setItem("scontoClickSinossiBozza",value);
+  status.textContent="Sinossi salvata su questo dispositivo.";
+ }catch(e){status.textContent="Impossibile salvare su questo dispositivo.";}
+});
+document.getElementById("copy").addEventListener("click",async()=>{
+ const value=area.value.trim();
+ if(!value){status.textContent="Non c'è testo da copiare.";return;}
+ try{await navigator.clipboard.writeText(value);status.textContent="Sinossi copiata. Ora puoi incollarla nel post.";}
+ catch(e){area.select();status.textContent="Seleziona il testo e usa Ctrl+C.";}
+});
 async function loadPanoramica(){
+ const output=document.getElementById("description");
+ const direct=(params.get("panoramica")||"").trim();
+ const isbn=(params.get("isbn")||"").trim().replace(/[- ]/g,"");
+ const asin=(params.get("asin")||"").trim();
+ const amazon=params.get("url")||"";
  if(direct){output.textContent=direct;return;}
  const codes=[];
  if(isbn)codes.push(isbn);
@@ -34,8 +86,7 @@ async function loadPanoramica(){
    if(m)codes.push(m[1].toUpperCase());
   }catch(e){}
  }
- const unique=[...new Set(codes)];
- for(const code of unique){
+ for(const code of [...new Set(codes)]){
   try{
    const response=await fetch("https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent("isbn:"+code)+"&maxResults=10");
    if(!response.ok)continue;
@@ -46,7 +97,7 @@ async function loadPanoramica(){
  }
  output.textContent="Panoramica non disponibile.";
 }
-loadPanoramica();
+if(!editorMode)loadPanoramica();
 </script>
 </body>
 </html>
