@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<title>Sconto Click Libri – Inserisci panoramica</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:22px;background:#fff;color:#222;font-family:Arial,sans-serif}
+main{max-width:680px;margin:0 auto}
+h1{font-size:23px;margin:0 0 8px}
+p{color:#555;line-height:1.5}
+textarea{display:block;width:100%;min-height:320px;padding:14px;border:2px solid #f58220;border-radius:10px;font:16px/1.6 Arial,sans-serif;resize:vertical;background:#fff}
+.actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
+button{border:0;border-radius:9px;padding:13px 17px;font-size:15px;font-weight:700;cursor:pointer;background:#f58220;color:#fff}
+button.secondary{background:#eee;color:#222}
+#status{min-height:24px;margin-top:12px;color:#287a39;font-size:14px}
+</style>
+</head>
+<body>
+<main>
+<h1>📚 Inserisci la panoramica</h1>
+<p>Tocca il riquadro e incolla la sinossi con Incolla oppure con Ctrl+V.</p>
+<textarea id="synopsis" placeholder="TOCCA QUI E INCOLLA LA SINOSSI DEL LIBRO"></textarea>
+<div class="actions">
+<button id="paste">📋 Incolla</button>
+<button id="save">💾 Salva bozza</button>
+<button id="copy" class="secondary">Copia testo</button>
+</div>
+<div id="status" role="status"></div>
+</main>
+<script>
+const area=document.getElementById("synopsis");
+const status=document.getElementById("status");
+try{area.value=localStorage.getItem("scontoClickSinossiBozza")||"";}catch(e){}
+document.getElementById("paste").addEventListener("click",async()=>{
+ try{area.value=await navigator.clipboard.readText();status.textContent="Testo incollato.";}
+ catch(e){status.textContent="Il browser non consente l'accesso agli appunti: tocca il riquadro e usa Incolla.";}
+});
+document.getElementById("save").addEventListener("click",()=>{
+ if(!area.value.trim()){status.textContent="Incolla prima la sinossi.";return;}
+ try{localStorage.setItem("scontoClickSinossiBozza",area.value.trim());status.textContent="Bozza salvata su questo dispositivo.";}
+ catch(e){status.textContent="Salvataggio non disponibile nel browser.";}
+});
+document.getElementById("copy").addEventListener("click",async()=>{
+ if(!area.value.trim()){status.textContent="Non c'è testo da copiare.";return;}
+ try{await navigator.clipboard.writeText(area.value);status.textContent="Testo copiato.";}
+ catch(e){area.select();status.textContent="Testo selezionato: usa Ctrl+C per copiarlo.";}
+});
+</script>
+</body>
+</html>
