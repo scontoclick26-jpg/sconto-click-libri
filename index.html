@@ -68,21 +68,42 @@ if(amazon){
 
 async function cercaLibro(){
  const queries=[];
- if(isbn)queries.push("isbn:"+isbn);
+ const codice=(isbn||"").trim().replace(/[- ]/g,"");
+
+ if(codice)queries.push("isbn:"+codice);
  if(title)queries.push("intitle:"+title+(author?" inauthor:"+author:""));
+
+ // Se il link Amazon contiene un codice ISBN/ASIN, prova a ricavarlo
+ if(!codice){
+  try{
+   const link=new URL(amazon);
+   const match=link.pathname.match(/\/(?:dp|gp\/product|gp\/aw\/d)\/([A-Z0-9]{10,13})/i);
+   if(match){
+    const trovato=match[1].toUpperCase();
+    queries.unshift("isbn:"+trovato);
+   }
+  }catch(e){}
+ }
 
  for(const q of queries){
   try{
-   const url="https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent(q)+"&maxResults=5";
+   const url="https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent(q)+"&maxResults=10";
    const r=await fetch(url);
    if(!r.ok)continue;
+
    const data=await r.json();
-   const item=(data.items||[]).find(x=>x.volumeInfo?.description)||data.items?.[0];
+   const items=data.items||[];
+   const item=items.find(x=>x.volumeInfo?.imageLinks?.thumbnail&&x.volumeInfo?.description)
+    ||items.find(x=>x.volumeInfo?.imageLinks?.thumbnail)
+    ||items.find(x=>x.volumeInfo?.description)
+    ||items[0];
+
    if(!item)continue;
 
    const v=item.volumeInfo||{};
-   if(!title&&v.title)document.getElementById("title").textContent=v.title;
-   if(!author&&v.authors)document.getElementById("author").textContent=v.authors.join(", ");
+
+   if(v.title)document.getElementById("title").textContent=v.title;
+   if(v.authors?.length)document.getElementById("author").textContent=v.authors.join(", ");
 
    if(image===""&&v.imageLinks?.thumbnail){
     const img=document.getElementById("cover");
@@ -92,15 +113,19 @@ async function cercaLibro(){
 
    document.getElementById("description").textContent=
     v.description||"Descrizione completa non disponibile.";
+
    document.getElementById("status").textContent=
     v.description?"Descrizione bibliografica trovata.":"Sinossi non disponibile.";
+
    return;
   }catch(e){}
  }
+
  document.getElementById("description").textContent=
  "Non è stato possibile recuperare una descrizione verificabile per questo libro.";
  document.getElementById("status").textContent="Informazioni non disponibili.";
 }
+
 cercaLibro();
 </script>
 </body>
