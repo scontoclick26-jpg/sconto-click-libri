@@ -1,0 +1,107 @@
+
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#fff7ed">
+<title>Sconto Click Libri</title>
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+<style>
+body{margin:0;padding:22px;background:#fff7ed;color:#292421;font-family:Arial,sans-serif}
+main{max-width:650px;margin:auto}
+header{font-size:21px;font-weight:bold;color:#e96d19;margin-bottom:22px}
+.card{background:white;padding:20px;border-radius:18px;border:1px solid #f2dfce}
+.book{display:flex;gap:18px;align-items:flex-start}
+img{width:105px;max-height:160px;object-fit:contain;border-radius:8px}
+h1{font-size:21px;margin:0 0 9px}
+.author{color:#777}
+h2{font-size:15px;color:#e96d19;margin-top:26px}
+#description{line-height:1.65;white-space:pre-line}
+#status{color:#777;font-size:13px}
+.buy{display:inline-block;background:#f47721;color:white;text-decoration:none;padding:13px 18px;border-radius:10px;font-weight:bold;margin-top:22px}
+footer{text-align:center;color:#888;font-size:12px;margin-top:20px}
+</style>
+</head>
+<body>
+<main>
+<header>📚 Sconto Click Libri</header>
+<section class="card">
+<div class="book">
+<img id="cover" hidden alt="Copertina">
+<div>
+<h1 id="title">Caricamento libro...</h1>
+<div id="author" class="author"></div>
+<p id="status">Ricerca informazioni bibliografiche...</p>
+</div>
+</div>
+<h2>📖 PANORAMICA DEL LIBRO</h2>
+<div id="description">Attendi qualche istante...</div>
+<a id="buy" class="buy" hidden target="_blank" rel="noopener">🛒 Vai all'offerta Amazon</a>
+</section>
+<footer>Sconto Click Libri · Informazioni bibliografiche</footer>
+</main>
+<script>
+const tg=window.Telegram?.WebApp;
+if(tg){tg.ready();tg.expand();}
+
+const p=new URLSearchParams(location.search);
+const title=p.get("title")||"";
+const author=p.get("author")||"";
+const asin=p.get("asin")||"";
+const isbn=p.get("isbn")||"";
+const image=p.get("image")||"";
+const amazon=p.get("url")||(asin?"https://www.amazon.it/dp/"+encodeURIComponent(asin):"");
+
+document.getElementById("title").textContent=title||"Panoramica del libro";
+document.getElementById("author").textContent=author;
+
+if(image){
+ document.getElementById("cover").src=image;
+ document.getElementById("cover").hidden=false;
+}
+if(amazon){
+ const b=document.getElementById("buy");
+ b.href=amazon;
+ b.hidden=false;
+}
+
+async function cercaLibro(){
+ const queries=[];
+ if(isbn)queries.push("isbn:"+isbn);
+ if(title)queries.push("intitle:"+title+(author?" inauthor:"+author:""));
+
+ for(const q of queries){
+  try{
+   const url="https://www.googleapis.com/books/v1/volumes?q="+encodeURIComponent(q)+"&maxResults=5";
+   const r=await fetch(url);
+   if(!r.ok)continue;
+   const data=await r.json();
+   const item=(data.items||[]).find(x=>x.volumeInfo?.description)||data.items?.[0];
+   if(!item)continue;
+
+   const v=item.volumeInfo||{};
+   if(!title&&v.title)document.getElementById("title").textContent=v.title;
+   if(!author&&v.authors)document.getElementById("author").textContent=v.authors.join(", ");
+
+   if(image===""&&v.imageLinks?.thumbnail){
+    const img=document.getElementById("cover");
+    img.src=v.imageLinks.thumbnail.replace("http:","https:");
+    img.hidden=false;
+   }
+
+   document.getElementById("description").textContent=
+    v.description||"Descrizione completa non disponibile.";
+   document.getElementById("status").textContent=
+    v.description?"Descrizione bibliografica trovata.":"Sinossi non disponibile.";
+   return;
+  }catch(e){}
+ }
+ document.getElementById("description").textContent=
+ "Non è stato possibile recuperare una descrizione verificabile per questo libro.";
+ document.getElementById("status").textContent="Informazioni non disponibili.";
+}
+cercaLibro();
+</script>
+</body>
+</html>
