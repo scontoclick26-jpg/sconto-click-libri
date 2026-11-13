@@ -21,11 +21,17 @@ h2{font-size:15px;color:#e96d19;margin-top:26px}
 #status{color:#777;font-size:13px}
 .buy{display:inline-block;background:#f47721;color:white;text-decoration:none;padding:13px 18px;border-radius:10px;font-weight:bold;margin-top:22px}
 footer{text-align:center;color:#888;font-size:12px;margin-top:20px}
+.editor{margin-top:24px;padding-top:18px;border-top:1px solid #f2dfce}
+.editor label{display:block;font-weight:bold;margin:10px 0 7px}
+.editor textarea{box-sizing:border-box;width:100%;min-height:160px;padding:12px;border:1px solid #e5cdbb;border-radius:10px;font:15px Arial;line-height:1.5}
+.editor button{background:#e96d19;color:white;border:0;border-radius:10px;padding:14px;font-weight:bold;margin-top:10px;width:100%}
+#shareStatus{font-size:13px;color:#666;margin-top:10px;line-height:1.5}
 </style>
 </head>
 <body>
 <main>
 <header>📚 Sconto Click Libri</header>
+
 <section class="card">
 <div class="book">
 <img id="cover" hidden alt="Copertina">
@@ -35,12 +41,23 @@ footer{text-align:center;color:#888;font-size:12px;margin-top:20px}
 <p id="status">Ricerca informazioni bibliografiche...</p>
 </div>
 </div>
+
 <h2>📖 PANORAMICA DEL LIBRO</h2>
 <div id="description">Attendi qualche istante...</div>
+
+<div id="editor" class="editor">
+<label for="panoramaInput">✍️ Inserisci la panoramica</label>
+<textarea id="panoramaInput" placeholder="Incolla qui la panoramica del libro..."></textarea>
+<button id="copyShare" type="button">📋 Copia per Telegram</button>
+<div id="shareStatus">Dopo aver copiato, incolla il collegamento nel post Telegram.</div>
+</div>
+
 <a id="buy" class="buy" hidden target="_blank" rel="noopener">🛒 Vai all'offerta Amazon</a>
 </section>
+
 <footer>Sconto Click Libri · Informazioni bibliografiche</footer>
 </main>
+
 <script>
 const tg=window.Telegram?.WebApp;
 if(tg){tg.ready();tg.expand();}
@@ -51,6 +68,7 @@ const author=p.get("author")||"";
 const asin=p.get("asin")||"";
 const isbn=p.get("isbn")||"";
 const image=p.get("image")||"";
+const panoramica=p.get("panoramica")||"";
 const amazon=p.get("url")||(asin?"https://www.amazon.it/dp/"+encodeURIComponent(asin):"");
 
 document.getElementById("title").textContent=title||"Panoramica del libro";
@@ -60,6 +78,7 @@ if(image){
  document.getElementById("cover").src=image;
  document.getElementById("cover").hidden=false;
 }
+
 if(amazon){
  const b=document.getElementById("buy");
  b.href=amazon;
@@ -67,21 +86,25 @@ if(amazon){
 }
 
 async function cercaLibro(){
+
+ if(panoramica){
+  document.getElementById("description").textContent=panoramica;
+  document.getElementById("status").textContent="Panoramica del libro.";
+  document.getElementById("editor").hidden=true;
+  return;
+ }
+
  const queries=[];
  const codice=(isbn||"").trim().replace(/[- ]/g,"");
 
  if(codice)queries.push("isbn:"+codice);
  if(title)queries.push("intitle:"+title+(author?" inauthor:"+author:""));
 
- // Se il link Amazon contiene un codice ISBN/ASIN, prova a ricavarlo
  if(!codice){
   try{
    const link=new URL(amazon);
    const match=link.pathname.match(/\/(?:dp|gp\/product|gp\/aw\/d)\/([A-Z0-9]{10,13})/i);
-   if(match){
-    const trovato=match[1].toUpperCase();
-    queries.unshift("isbn:"+trovato);
-   }
+   if(match)queries.unshift("isbn:"+match[1].toUpperCase());
   }catch(e){}
  }
 
@@ -102,8 +125,8 @@ async function cercaLibro(){
 
    const v=item.volumeInfo||{};
 
-   if(v.title)document.getElementById("title").textContent=v.title;
-   if(v.authors?.length)document.getElementById("author").textContent=v.authors.join(", ");
+   if(!title&&v.title)document.getElementById("title").textContent=v.title;
+   if(!author&&v.authors?.length)document.getElementById("author").textContent=v.authors.join(", ");
 
    if(image===""&&v.imageLinks?.thumbnail){
     const img=document.getElementById("cover");
@@ -122,9 +145,31 @@ async function cercaLibro(){
  }
 
  document.getElementById("description").textContent=
- "Non è stato possibile recuperare una descrizione verificabile per questo libro.";
- document.getElementById("status").textContent="Informazioni non disponibili.";
+ "Incolla qui la panoramica del libro.";
+ document.getElementById("status").textContent="Panoramica inseribile manualmente.";
 }
+
+document.getElementById("copyShare").addEventListener("click",async()=>{
+ const text=document.getElementById("panoramaInput").value.trim();
+ const status=document.getElementById("shareStatus");
+
+ if(!text){
+  status.textContent="Prima incolla la panoramica del libro.";
+  return;
+ }
+
+ const shareUrl=new URL(location.href);
+ shareUrl.searchParams.set("panoramica",text);
+
+ const copyText="📖 Leggi la panoramica: "+shareUrl.toString();
+
+ try{
+  await navigator.clipboard.writeText(copyText);
+  status.textContent="✅ Collegamento copiato! Incollalo nel post Telegram.";
+ }catch(e){
+  status.textContent="Copia manualmente questo collegamento: "+shareUrl.toString();
+ }
+});
 
 cercaLibro();
 </script>
