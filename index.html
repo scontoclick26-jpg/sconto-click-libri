@@ -158,7 +158,7 @@ document.getElementById("copyShare").addEventListener("click",async()=>{
   return;
  }
 
- const shareUrl=new URL(location.href);
+ const shareUrl=new URL(location.origin + location.pathname);
  shareUrl.searchParams.set("panoramica",text);
 
  const copyText="📖 Leggi la panoramica: "+shareUrl.toString();
