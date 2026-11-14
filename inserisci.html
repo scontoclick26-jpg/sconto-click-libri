@@ -37,13 +37,12 @@ const area=document.getElementById("synopsis");
 const amazonLink=document.getElementById("amazonLink");
 const status=document.getElementById("status");
 try{area.value=localStorage.getItem("scontoClickSinossiBozza")||"";amazonLink.value=localStorage.getItem("scontoClickLinkAmazon")||"";}catch(e){}
-function getAsin(value){
+function isAmazonLink(value){
  try{
   const url=new URL(value.trim());
-  if(!/(^|\.)amazon\./i.test(url.hostname))return "";
-  const match=url.pathname.match(/\/(?:dp|gp\/product|gp\/aw\/d|product)\/([A-Z0-9]{10})(?:[/?]|$)/i);
-  return match?match[1].toUpperCase():"";
- }catch(e){return "";}
+  const host=url.hostname.toLowerCase();
+  return host.includes("amazon.") || host==="link.amazon";
+ }catch(e){return false;}
 }
 document.getElementById("paste").addEventListener("click",async()=>{
  try{area.value=await navigator.clipboard.readText();status.textContent="Sinossi incollata.";}
@@ -57,11 +56,11 @@ document.getElementById("save").addEventListener("click",()=>{
 document.getElementById("send").addEventListener("click",async()=>{
  const synopsis=area.value.trim();
  const link=amazonLink.value.trim();
- const code=getAsin(link);
+ const validLink=isAmazonLink(link);
  if(!synopsis){status.textContent="Incolla prima la sinossi.";return;}
  if(!link){status.textContent="Per associare la sinossi al libro, incolla il suo link Amazon.";return;}
- if(!code){status.textContent="Non riesco a leggere l'ASIN da questo link. Usa il link completo Amazon con /dp/ seguito dal codice del libro.";return;}
- const command="/sinossi "+code+"\n"+synopsis;
+ if(!validLink){status.textContent="Inserisci un link Amazon valido, anche abbreviato.";return;}
+ const command="/sinossi "+link+"\n"+synopsis;
  const botWindow=window.open("https://t.me/Sconto_Click_bot","_blank");
  try{await navigator.clipboard.writeText(command);status.textContent="Comando copiato. Nel bot Telegram incollalo e invialo.";
   if(!botWindow)status.textContent+=" Se non si è aperto, consenti i popup o apri @Sconto_Click_bot.";
