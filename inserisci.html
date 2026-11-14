@@ -46,7 +46,19 @@ document.getElementById("save").addEventListener("click",()=>{
  try{localStorage.setItem("scontoClickSinossiBozza",area.value.trim());localStorage.setItem("scontoClickAsin",asin.value.trim().toUpperCase());status.textContent="Bozza salvata su questo dispositivo.";}
  catch(e){status.textContent="Salvataggio non disponibile nel browser.";}
 });
-document.getElementById("send").addEventListener("click",async()=>{\n const code=asin.value.trim().toUpperCase();\n const synopsis=area.value.trim();\n if(!/^[A-Z0-9]{10,13}$/.test(code)){status.textContent="Inserisci un ASIN valido (10 caratteri).";return;}\n if(!synopsis){status.textContent="Incolla prima la sinossi.";return;}\n const command="/sinossi "+code+"\\n"+synopsis;\n try{await navigator.clipboard.writeText(command);status.textContent="Comando copiato. Apri @Sconto_Click_bot, incollalo e invialo.";window.open("https://t.me/Sconto_Click_bot","_blank");}\n catch(e){area.value=command;area.select();status.textContent="Comando pronto nel riquadro: copialo e invialo a @Sconto_Click_bot."; }\n});\ndocument.getElementById("copy").addEventListener("click",async()=>{
+document.getElementById("send").addEventListener("click",async()=>{
+ const code=asin.value.trim().toUpperCase();
+ const synopsis=area.value.trim();
+ if(!/^[A-Z0-9]{10,13}$/.test(code)){status.textContent="Inserisci un ASIN valido (10-13 caratteri).";return;}
+ if(!synopsis){status.textContent="Incolla prima la sinossi.";return;}
+ const command="/sinossi "+code+"\n"+synopsis;
+ const botWindow=window.open("https://t.me/Sconto_Click_bot","_blank");
+ try{await navigator.clipboard.writeText(command);status.textContent="Comando copiato. Nel bot Telegram incollalo e invialo.";
+  if(!botWindow)status.textContent+=" Se Telegram non si è aperto, consenti i popup oppure apri @Sconto_Click_bot manualmente.";
+ }catch(e){area.value=command;area.select();status.textContent="Copia il comando selezionato con Ctrl+C, poi apri @Sconto_Click_bot e invialo.";
+  if(!botWindow)status.textContent+=" Apri @Sconto_Click_bot manualmente.";
+ }
+});\ndocument.getElementById("copy").addEventListener("click",async()=>{
  if(!area.value.trim()){status.textContent="Non c'è testo da copiare.";return;}
  try{await navigator.clipboard.writeText(area.value);status.textContent="Testo copiato.";}
  catch(e){area.select();status.textContent="Testo selezionato: usa Ctrl+C per copiarlo.";}
