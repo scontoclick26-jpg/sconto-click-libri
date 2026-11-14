@@ -62,7 +62,7 @@ document.getElementById("generate").addEventListener("click",()=>{
  const synopsis=area.value.trim();
  if(!synopsis){status.textContent="Incolla prima la sinossi.";return;}
  const payload=JSON.stringify({t:title.value.trim(),s:synopsis});
- generatedUrl=new URL("sinossi.html",location.href).href+"#d="+encodeText(payload);
+ generatedUrl=new URL("s/",location.href).href+"#d="+encodeText(payload);
  document.getElementById("shareLink").textContent=generatedUrl;
  result.style.display="block";
  try{localStorage.setItem("scontoClickSinossiBozza",synopsis);localStorage.setItem("scontoClickTitoloBozza",title.value.trim());}catch(e){}
