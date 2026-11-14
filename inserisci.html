@@ -21,29 +21,32 @@ button.secondary{background:#eee;color:#222}
 <body>
 <main>
 <h1>📚 Inserisci la panoramica</h1>
-<p>Tocca il riquadro e incolla la sinossi con Incolla oppure con Ctrl+V.</p>
+<p>Inserisci l’ASIN Amazon del libro, poi incolla la sinossi. Il testo verrà preparato per il bot Telegram.</p>
+<input id="asin" maxlength="13" placeholder="ASIN Amazon (es. B0XXXXXXXX)" autocomplete="off" style="display:block;width:100%;padding:13px;margin:0 0 12px;border:2px solid #f58220;border-radius:10px;font:16px Arial,sans-serif;text-transform:uppercase">
 <textarea id="synopsis" placeholder="TOCCA QUI E INCOLLA LA SINOSSI DEL LIBRO"></textarea>
 <div class="actions">
 <button id="paste">📋 Incolla</button>
 <button id="save">💾 Salva bozza</button>
+<button id="send">📨 Prepara invio al bot</button>
 <button id="copy" class="secondary">Copia testo</button>
 </div>
 <div id="status" role="status"></div>
 </main>
 <script>
 const area=document.getElementById("synopsis");
+const asin=document.getElementById("asin");
 const status=document.getElementById("status");
-try{area.value=localStorage.getItem("scontoClickSinossiBozza")||"";}catch(e){}
+try{area.value=localStorage.getItem("scontoClickSinossiBozza")||"";asin.value=localStorage.getItem("scontoClickAsin")||"";}catch(e){}
 document.getElementById("paste").addEventListener("click",async()=>{
  try{area.value=await navigator.clipboard.readText();status.textContent="Testo incollato.";}
  catch(e){status.textContent="Il browser non consente l'accesso agli appunti: tocca il riquadro e usa Incolla.";}
 });
 document.getElementById("save").addEventListener("click",()=>{
  if(!area.value.trim()){status.textContent="Incolla prima la sinossi.";return;}
- try{localStorage.setItem("scontoClickSinossiBozza",area.value.trim());status.textContent="Bozza salvata su questo dispositivo.";}
+ try{localStorage.setItem("scontoClickSinossiBozza",area.value.trim());localStorage.setItem("scontoClickAsin",asin.value.trim().toUpperCase());status.textContent="Bozza salvata su questo dispositivo.";}
  catch(e){status.textContent="Salvataggio non disponibile nel browser.";}
 });
-document.getElementById("copy").addEventListener("click",async()=>{
+document.getElementById("send").addEventListener("click",async()=>{\n const code=asin.value.trim().toUpperCase();\n const synopsis=area.value.trim();\n if(!/^[A-Z0-9]{10,13}$/.test(code)){status.textContent="Inserisci un ASIN valido (10 caratteri).";return;}\n if(!synopsis){status.textContent="Incolla prima la sinossi.";return;}\n const command="/sinossi "+code+"\\n"+synopsis;\n try{await navigator.clipboard.writeText(command);status.textContent="Comando copiato. Apri @Sconto_Click_bot, incollalo e invialo.";window.open("https://t.me/Sconto_Click_bot","_blank");}\n catch(e){area.value=command;area.select();status.textContent="Comando pronto nel riquadro: copialo e invialo a @Sconto_Click_bot."; }\n});\ndocument.getElementById("copy").addEventListener("click",async()=>{
  if(!area.value.trim()){status.textContent="Non c'è testo da copiare.";return;}
  try{await navigator.clipboard.writeText(area.value);status.textContent="Testo copiato.";}
  catch(e){area.select();status.textContent="Testo selezionato: usa Ctrl+C per copiarlo.";}
