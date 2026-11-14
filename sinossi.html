@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#ffffff">
-<title>📖 Panoramica del libro – Sconto Click Libri</title>
+<title>📖 Panoramica del libro – ScontoLibri</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;padding:24px 16px;min-height:100vh;background:#fff7ef;color:#222;font-family:Arial,sans-serif}
@@ -18,10 +18,10 @@ footer{margin-top:24px;padding-top:14px;border-top:1px solid #eee;color:#888;fon
 </head>
 <body>
 <main>
-<div class="brand">📚 SCONTO CLICK LIBRI</div>
+<div class="brand">📚 SCONTOLIBRI</div>
 <h1 id="title">📖 Panoramica del libro</h1>
 <div id="synopsis"><p id="message">Caricamento della panoramica...</p></div>
-<footer>Una lettura consigliata da Sconto Click Libri</footer>
+<footer>Una lettura consigliata da ScontoLibri</footer>
 </main>
 <script>
 (function(){
@@ -41,7 +41,7 @@ footer{margin-top:24px;padding-top:14px;border-top:1px solid #eee;color:#888;fon
   synopsis.textContent=String(data.s).trim();
  }catch(e){
   title.textContent="📖 Panoramica non disponibile";
-  message.textContent="Il link non contiene una sinossi valida. Chiedi di nuovo il collegamento a Sconto Click Libri.";
+  message.textContent="Il link non contiene una sinossi valida. Chiedi di nuovo il collegamento a ScontoLibri.";
  }
 })();
 </script>
