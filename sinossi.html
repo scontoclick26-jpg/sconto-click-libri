@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#ffffff">
+<title>📖 Panoramica del libro – Sconto Click Libri</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;padding:24px 16px;min-height:100vh;background:#fff7ef;color:#222;font-family:Arial,sans-serif}
+main{max-width:720px;margin:0 auto;background:#fff;border:2px solid #f58220;border-radius:16px;padding:24px;box-shadow:0 8px 28px rgba(0,0,0,.08)}
+.brand{color:#f58220;font-size:13px;font-weight:700;letter-spacing:.4px;margin-bottom:18px}
+h1{font-size:23px;line-height:1.3;margin:0 0 18px}
+#synopsis{font-size:17px;line-height:1.75;white-space:pre-wrap;overflow-wrap:anywhere}
+#message{color:#666;line-height:1.6}
+footer{margin-top:24px;padding-top:14px;border-top:1px solid #eee;color:#888;font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+<main>
+<div class="brand">📚 SCONTO CLICK LIBRI</div>
+<h1 id="title">📖 Panoramica del libro</h1>
+<div id="synopsis"><p id="message">Caricamento della panoramica...</p></div>
+<footer>Una lettura consigliata da Sconto Click Libri</footer>
+</main>
+<script>
+(function(){
+ const title=document.getElementById("title");
+ const synopsis=document.getElementById("synopsis");
+ const message=document.getElementById("message");
+ try{
+  const match=location.hash.match(/(?:^#|&)d=([^&]*)/);
+  if(!match)throw new Error("missing");
+  let encoded=match[1].replace(/-/g,"+").replace(/_/g,"/");
+  while(encoded.length%4)encoded+="=";
+  const binary=atob(encoded);
+  const bytes=Uint8Array.from(binary,c=>c.charCodeAt(0));
+  const data=JSON.parse(new TextDecoder().decode(bytes));
+  if(!data.s||!String(data.s).trim())throw new Error("empty");
+  if(data.t&&String(data.t).trim())title.textContent="📖 "+String(data.t).trim();
+  synopsis.textContent=String(data.s).trim();
+ }catch(e){
+  title.textContent="📖 Panoramica non disponibile";
+  message.textContent="Il link non contiene una sinossi valida. Chiedi di nuovo il collegamento a Sconto Click Libri.";
+ }
+})();
+</script>
+</body>
+</html>
