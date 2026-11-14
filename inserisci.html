@@ -48,28 +48,12 @@ const status=document.getElementById("status");
 const result=document.getElementById("result");
 let generatedUrl="";
 const ARCHIVE_URL="https://script.google.com/macros/s/AKfycbzAcUGZUXXgwVitXv79bRrYlSm2gkn3ska_JtK122wI0XsuyUYY5E5qHGflU23ya21rvw/exec";
-let saveTimer=null;
-window.addEventListener("message",event=>{
- let d=event.data;
- if(typeof d==="string"){
-  try{d=JSON.parse(d);}catch(e){return;}
+function createShortId(){
+ if(window.crypto && crypto.randomUUID){
+  return crypto.randomUUID().replace(/-/g,"").substring(0,8).toUpperCase();
  }
- if(!d||typeof d!=="object")return;
-
- if(d.type==="scl_error"){
-  if(saveTimer)clearTimeout(saveTimer);
-  status.textContent="Google ha segnalato un errore: "+String(d.error||"salvataggio non riuscito");
-  return;
- }
-
- if(d.type!=="scl_saved"||!/^[A-F0-9]{8}$/.test(d.id||""))return;
- if(saveTimer)clearTimeout(saveTimer);
-
- generatedUrl=new URL("s/?id="+encodeURIComponent(d.id),location.href).href;
- document.getElementById("shareLink").textContent=generatedUrl;
- result.style.display="block";
- status.textContent="Link breve creato e salvato. Ora puoi copiarlo.";
-});
+ return Math.random().toString(16).substring(2,10).toUpperCase();
+}
 try{area.value=localStorage.getItem("scontoClickSinossiBozza")||"";title.value=localStorage.getItem("scontoClickTitoloBozza")||"";}catch(e){}
 function encodeText(value){
  const bytes=new TextEncoder().encode(value);
@@ -86,22 +70,21 @@ document.getElementById("generate").addEventListener("click",()=>{
  if(!synopsis){status.textContent="Incolla prima la sinossi.";return;}
  if(new TextEncoder().encode(synopsis).length>8000){status.textContent="La sinossi è troppo lunga: riducila a meno di 8 KB.";return;}
  try{localStorage.setItem("scontoClickSinossiBozza",synopsis);localStorage.setItem("scontoClickTitoloBozza",title.value.trim());}catch(e){}
- generatedUrl="";
- result.style.display="none";
- status.textContent="Salvataggio della sinossi in corso...";
+ const id=createShortId();
+ generatedUrl=new URL("s/?id="+encodeURIComponent(id),location.href).href;
+ document.getElementById("shareLink").textContent=generatedUrl;
+ result.style.display="block";
+ status.textContent="Link creato. Salvataggio della sinossi in corso...";
  let frame=document.getElementById("sclSubmitFrame");
  if(!frame){frame=document.createElement("iframe");frame.name="sclSubmitFrame";frame.id="sclSubmitFrame";frame.style.display="none";document.body.appendChild(frame);}
  let form=document.getElementById("sclSubmitForm");
  if(form)form.remove();
  form=document.createElement("form");form.id="sclSubmitForm";form.method="POST";form.action=ARCHIVE_URL;form.target="sclSubmitFrame";
- const fields={t:title.value.trim(),s:synopsis};
+ const fields={id:id,t:title.value.trim(),s:synopsis};
  Object.entries(fields).forEach(([name,value])=>{const input=document.createElement("input");input.type="hidden";input.name=name;input.value=value;form.appendChild(input);});
  document.body.appendChild(form);
- if(saveTimer)clearTimeout(saveTimer);
- saveTimer=setTimeout(()=>{
-  status.textContent="La sinossi potrebbe essere stata salvata, ma non è arrivata la conferma. Riprova solo dopo aver verificato il codice in Google Apps Script.";
- },20000);
  form.submit();
+ status.textContent="Link pronto. La sinossi viene salvata: attendi qualche secondo prima di usarlo.";
 });
 
 document.getElementById("copyLink").addEventListener("click",async()=>{
