@@ -21,8 +21,8 @@ button.secondary{background:#eee;color:#222}
 <body>
 <main>
 <h1>📚 Inserisci la panoramica</h1>
-<p>Inserisci l’ASIN Amazon del libro, poi incolla la sinossi. Il testo verrà preparato per il bot Telegram.</p>
-<input id="asin" maxlength="13" placeholder="ASIN Amazon (es. B0XXXXXXXX)" autocomplete="off" style="display:block;width:100%;padding:13px;margin:0 0 12px;border:2px solid #f58220;border-radius:10px;font:16px Arial,sans-serif;text-transform:uppercase">
+<p>Incolla la sinossi del libro. Se vuoi, aggiungi il link Amazon: ricaveremo automaticamente il codice del libro.</p>
+<input id="amazonLink" type="url" placeholder="Link Amazon del libro (facoltativo)" autocomplete="url" style="display:block;width:100%;padding:13px;margin:0 0 12px;border:2px solid #f58220;border-radius:10px;font:16px Arial,sans-serif">
 <textarea id="synopsis" placeholder="TOCCA QUI E INCOLLA LA SINOSSI DEL LIBRO"></textarea>
 <div class="actions">
 <button id="paste">📋 Incolla</button>
@@ -34,31 +34,42 @@ button.secondary{background:#eee;color:#222}
 </main>
 <script>
 const area=document.getElementById("synopsis");
-const asin=document.getElementById("asin");
+const amazonLink=document.getElementById("amazonLink");
 const status=document.getElementById("status");
-try{area.value=localStorage.getItem("scontoClickSinossiBozza")||"";asin.value=localStorage.getItem("scontoClickAsin")||"";}catch(e){}
+try{area.value=localStorage.getItem("scontoClickSinossiBozza")||"";amazonLink.value=localStorage.getItem("scontoClickLinkAmazon")||"";}catch(e){}
+function getAsin(value){
+ try{
+  const url=new URL(value.trim());
+  if(!/(^|\\.)amazon\\./i.test(url.hostname))return "";
+  const match=url.pathname.match(/\\/(?:dp|gp\\/product|gp\\/aw\\/d|product)\\/([A-Z0-9]{10})(?:[/?]|$)/i);
+  return match?match[1].toUpperCase():"";
+ }catch(e){return "";}
+}
 document.getElementById("paste").addEventListener("click",async()=>{
- try{area.value=await navigator.clipboard.readText();status.textContent="Testo incollato.";}
- catch(e){status.textContent="Il browser non consente l'accesso agli appunti: tocca il riquadro e usa Incolla.";}
+ try{area.value=await navigator.clipboard.readText();status.textContent="Sinossi incollata.";}
+ catch(e){status.textContent="Tocca il riquadro della sinossi e usa Incolla.";}
 });
 document.getElementById("save").addEventListener("click",()=>{
  if(!area.value.trim()){status.textContent="Incolla prima la sinossi.";return;}
- try{localStorage.setItem("scontoClickSinossiBozza",area.value.trim());localStorage.setItem("scontoClickAsin",asin.value.trim().toUpperCase());status.textContent="Bozza salvata su questo dispositivo.";}
+ try{localStorage.setItem("scontoClickSinossiBozza",area.value.trim());localStorage.setItem("scontoClickLinkAmazon",amazonLink.value.trim());status.textContent="Bozza salvata su questo dispositivo.";}
  catch(e){status.textContent="Salvataggio non disponibile nel browser.";}
 });
 document.getElementById("send").addEventListener("click",async()=>{
- const code=asin.value.trim().toUpperCase();
  const synopsis=area.value.trim();
- if(!/^[A-Z0-9]{10,13}$/.test(code)){status.textContent="Inserisci un ASIN valido (10-13 caratteri).";return;}
+ const link=amazonLink.value.trim();
+ const code=getAsin(link);
  if(!synopsis){status.textContent="Incolla prima la sinossi.";return;}
- const command="/sinossi "+code+"\n"+synopsis;
+ if(!link){status.textContent="Per associare la sinossi al libro, incolla il suo link Amazon.";return;}
+ if(!code){status.textContent="Non riesco a leggere l'ASIN da questo link. Usa il link completo Amazon con /dp/ seguito dal codice del libro.";return;}
+ const command="/sinossi "+code+"\\n"+synopsis;
  const botWindow=window.open("https://t.me/Sconto_Click_bot","_blank");
  try{await navigator.clipboard.writeText(command);status.textContent="Comando copiato. Nel bot Telegram incollalo e invialo.";
-  if(!botWindow)status.textContent+=" Se Telegram non si è aperto, consenti i popup oppure apri @Sconto_Click_bot manualmente.";
+  if(!botWindow)status.textContent+=" Se non si è aperto, consenti i popup o apri @Sconto_Click_bot.";
  }catch(e){area.value=command;area.select();status.textContent="Copia il comando selezionato con Ctrl+C, poi apri @Sconto_Click_bot e invialo.";
   if(!botWindow)status.textContent+=" Apri @Sconto_Click_bot manualmente.";
  }
-});\ndocument.getElementById("copy").addEventListener("click",async()=>{
+});
+document.getElementById("copy").addEventListener("click",async()=>{
  if(!area.value.trim()){status.textContent="Non c'è testo da copiare.";return;}
  try{await navigator.clipboard.writeText(area.value);status.textContent="Testo copiato.";}
  catch(e){area.select();status.textContent="Testo selezionato: usa Ctrl+C per copiarlo.";}
