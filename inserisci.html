@@ -40,8 +40,8 @@ try{area.value=localStorage.getItem("scontoClickSinossiBozza")||"";amazonLink.va
 function getAsin(value){
  try{
   const url=new URL(value.trim());
-  if(!/(^|\\.)amazon\\./i.test(url.hostname))return "";
-  const match=url.pathname.match(/\\/(?:dp|gp\\/product|gp\\/aw\\/d|product)\\/([A-Z0-9]{10})(?:[/?]|$)/i);
+  if(!/(^|\.)amazon\./i.test(url.hostname))return "";
+  const match=url.pathname.match(/\/(?:dp|gp\/product|gp\/aw\/d|product)\/([A-Z0-9]{10})(?:[/?]|$)/i);
   return match?match[1].toUpperCase():"";
  }catch(e){return "";}
 }
@@ -61,7 +61,7 @@ document.getElementById("send").addEventListener("click",async()=>{
  if(!synopsis){status.textContent="Incolla prima la sinossi.";return;}
  if(!link){status.textContent="Per associare la sinossi al libro, incolla il suo link Amazon.";return;}
  if(!code){status.textContent="Non riesco a leggere l'ASIN da questo link. Usa il link completo Amazon con /dp/ seguito dal codice del libro.";return;}
- const command="/sinossi "+code+"\\n"+synopsis;
+ const command="/sinossi "+code+"\n"+synopsis;
  const botWindow=window.open("https://t.me/Sconto_Click_bot","_blank");
  try{await navigator.clipboard.writeText(command);status.textContent="Comando copiato. Nel bot Telegram incollalo e invialo.";
   if(!botWindow)status.textContent+=" Se non si è aperto, consenti i popup o apri @Sconto_Click_bot.";
