@@ -48,9 +48,23 @@ const status=document.getElementById("status");
 const result=document.getElementById("result");
 let generatedUrl="";
 const ARCHIVE_URL="https://script.google.com/macros/s/AKfycbzAcUGZUXXgwVitXv79bRrYlSm2gkn3ska_JtK122wI0XsuyUYY5E5qHGflU23ya21rvw/exec";
+let saveTimer=null;
 window.addEventListener("message",event=>{
- const d=event.data;
- if(!d||d.type!=="scl_saved"||!/^[A-F0-9]{8}$/.test(d.id||""))return;
+ let d=event.data;
+ if(typeof d==="string"){
+  try{d=JSON.parse(d);}catch(e){return;}
+ }
+ if(!d||typeof d!=="object")return;
+
+ if(d.type==="scl_error"){
+  if(saveTimer)clearTimeout(saveTimer);
+  status.textContent="Google ha segnalato un errore: "+String(d.error||"salvataggio non riuscito");
+  return;
+ }
+
+ if(d.type!=="scl_saved"||!/^[A-F0-9]{8}$/.test(d.id||""))return;
+ if(saveTimer)clearTimeout(saveTimer);
+
  generatedUrl=new URL("s/?id="+encodeURIComponent(d.id),location.href).href;
  document.getElementById("shareLink").textContent=generatedUrl;
  result.style.display="block";
@@ -82,7 +96,12 @@ document.getElementById("generate").addEventListener("click",()=>{
  form=document.createElement("form");form.id="sclSubmitForm";form.method="POST";form.action=ARCHIVE_URL;form.target="sclSubmitFrame";
  const fields={t:title.value.trim(),s:synopsis};
  Object.entries(fields).forEach(([name,value])=>{const input=document.createElement("input");input.type="hidden";input.name=name;input.value=value;form.appendChild(input);});
- document.body.appendChild(form);form.submit();
+ document.body.appendChild(form);
+ if(saveTimer)clearTimeout(saveTimer);
+ saveTimer=setTimeout(()=>{
+  status.textContent="La sinossi potrebbe essere stata salvata, ma non è arrivata la conferma. Riprova solo dopo aver verificato il codice in Google Apps Script.";
+ },20000);
+ form.submit();
 });
 
 document.getElementById("copyLink").addEventListener("click",async()=>{
