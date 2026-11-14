@@ -61,11 +61,11 @@ document.getElementById("send").addEventListener("click",async()=>{
  if(!link){status.textContent="Per associare la sinossi al libro, incolla il suo link Amazon.";return;}
  if(!validLink){status.textContent="Inserisci un link Amazon valido, anche abbreviato.";return;}
  const command="/sinossi "+link+"\n"+synopsis;
- const botWindow=window.open("https://t.me/Sconto_Click_bot","_blank");
+ const botWindow=window.open("https://t.me/Scontoklick_bot","_blank");
  try{await navigator.clipboard.writeText(command);status.textContent="Comando copiato. Nel bot Telegram incollalo e invialo.";
-  if(!botWindow)status.textContent+=" Se non si è aperto, consenti i popup o apri @Sconto_Click_bot.";
- }catch(e){area.value=command;area.select();status.textContent="Copia il comando selezionato con Ctrl+C, poi apri @Sconto_Click_bot e invialo.";
-  if(!botWindow)status.textContent+=" Apri @Sconto_Click_bot manualmente.";
+  if(!botWindow)status.textContent+=" Se non si è aperto, consenti i popup o apri @Scontoklick_bot.";
+ }catch(e){area.value=command;area.select();status.textContent="Copia il comando selezionato con Ctrl+C, poi apri @Scontoklick_bot e invialo.";
+  if(!botWindow)status.textContent+=" Apri @Scontoklick_bot manualmente.";
  }
 });
 document.getElementById("copy").addEventListener("click",async()=>{
