@@ -54,7 +54,18 @@ function createShortId(){
  }
  return Math.random().toString(16).substring(2,10).toUpperCase();
 }
-try{area.value=localStorage.getItem("scontoClickSinossiBozza")||"";title.value=localStorage.getItem("scontoClickTitoloBozza")||"";}catch(e){}
+function clearDraft(){
+ area.value="";
+ title.value="";
+ try{
+  localStorage.removeItem("scontoClickSinossiBozza");
+  localStorage.removeItem("scontoClickTitoloBozza");
+ }catch(e){}
+}
+window.addEventListener("pagehide",clearDraft);
+document.addEventListener("visibilitychange",()=>{
+ if(document.visibilityState==="hidden")clearDraft();
+});
 function encodeText(value){
  const bytes=new TextEncoder().encode(value);
  let binary="";
@@ -69,7 +80,6 @@ document.getElementById("generate").addEventListener("click",()=>{
  const synopsis=area.value.trim();
  if(!synopsis){status.textContent="Incolla prima la sinossi.";return;}
  if(new TextEncoder().encode(synopsis).length>8000){status.textContent="La sinossi è troppo lunga: riducila a meno di 8 KB.";return;}
- try{localStorage.setItem("scontoClickSinossiBozza",synopsis);localStorage.setItem("scontoClickTitoloBozza",title.value.trim());}catch(e){}
  const id=createShortId();
  generatedUrl=new URL("s/?id="+encodeURIComponent(id),location.href).href;
  document.getElementById("shareLink").textContent=generatedUrl;
@@ -86,7 +96,6 @@ document.getElementById("generate").addEventListener("click",()=>{
  form.submit();
  status.textContent="Link pronto. La sinossi viene salvata: attendi qualche secondo prima di usarlo.";
 });
-
 document.getElementById("copyLink").addEventListener("click",async()=>{
  if(!generatedUrl)return;
  try{await navigator.clipboard.writeText(generatedUrl);status.textContent="Link copiato! Incollalo nel campo URL di “Crea link” su Telegram.";}
