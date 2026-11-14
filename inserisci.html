@@ -47,6 +47,15 @@ const title=document.getElementById("bookTitle");
 const status=document.getElementById("status");
 const result=document.getElementById("result");
 let generatedUrl="";
+const ARCHIVE_URL="https://script.google.com/macros/s/AKfycbzAcUGZUXXgwVitXv79bRrYlSm2gkn3ska_JtK122wI0XsuyUYY5E5qHGflU23ya21rvw/exec";
+window.addEventListener("message",event=>{
+ const d=event.data;
+ if(!d||d.type!=="scl_saved"||!/^[A-F0-9]{8}$/.test(d.id||""))return;
+ generatedUrl=new URL("s/?id="+encodeURIComponent(d.id),location.href).href;
+ document.getElementById("shareLink").textContent=generatedUrl;
+ result.style.display="block";
+ status.textContent="Link breve creato e salvato. Ora puoi copiarlo.";
+});
 try{area.value=localStorage.getItem("scontoClickSinossiBozza")||"";title.value=localStorage.getItem("scontoClickTitoloBozza")||"";}catch(e){}
 function encodeText(value){
  const bytes=new TextEncoder().encode(value);
@@ -61,13 +70,21 @@ document.getElementById("paste").addEventListener("click",async()=>{
 document.getElementById("generate").addEventListener("click",()=>{
  const synopsis=area.value.trim();
  if(!synopsis){status.textContent="Incolla prima la sinossi.";return;}
- const payload=JSON.stringify({t:title.value.trim(),s:synopsis});
- generatedUrl=new URL("s/",location.href).href+"#d="+encodeText(payload);
- document.getElementById("shareLink").textContent=generatedUrl;
- result.style.display="block";
+ if(new TextEncoder().encode(synopsis).length>8000){status.textContent="La sinossi è troppo lunga: riducila a meno di 8 KB.";return;}
  try{localStorage.setItem("scontoClickSinossiBozza",synopsis);localStorage.setItem("scontoClickTitoloBozza",title.value.trim());}catch(e){}
- status.textContent="Link creato. Ora copialo e inseriscilo nel testo del post Telegram.";
+ generatedUrl="";
+ result.style.display="none";
+ status.textContent="Salvataggio della sinossi in corso...";
+ let frame=document.getElementById("sclSubmitFrame");
+ if(!frame){frame=document.createElement("iframe");frame.name="sclSubmitFrame";frame.id="sclSubmitFrame";frame.style.display="none";document.body.appendChild(frame);}
+ let form=document.getElementById("sclSubmitForm");
+ if(form)form.remove();
+ form=document.createElement("form");form.id="sclSubmitForm";form.method="POST";form.action=ARCHIVE_URL;form.target="sclSubmitFrame";
+ const fields={t:title.value.trim(),s:synopsis};
+ Object.entries(fields).forEach(([name,value])=>{const input=document.createElement("input");input.type="hidden";input.name=name;input.value=value;form.appendChild(input);});
+ document.body.appendChild(form);form.submit();
 });
+
 document.getElementById("copyLink").addEventListener("click",async()=>{
  if(!generatedUrl)return;
  try{await navigator.clipboard.writeText(generatedUrl);status.textContent="Link copiato! Incollalo nel campo URL di “Crea link” su Telegram.";}
