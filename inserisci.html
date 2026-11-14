@@ -4,74 +4,77 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="theme-color" content="#ffffff">
-<title>Sconto Click Libri – Inserisci panoramica</title>
+<title>Sconto Click Libri – Crea link sinossi</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;padding:22px;background:#fff;color:#222;font-family:Arial,sans-serif}
 main{max-width:680px;margin:0 auto}
 h1{font-size:23px;margin:0 0 8px}
 p{color:#555;line-height:1.5}
-textarea{display:block;width:100%;min-height:320px;padding:14px;border:2px solid #f58220;border-radius:10px;font:16px/1.6 Arial,sans-serif;resize:vertical;background:#fff}
+input,textarea{display:block;width:100%;padding:14px;border:2px solid #f58220;border-radius:10px;font:16px Arial,sans-serif;margin:0 0 12px}
+textarea{min-height:280px;line-height:1.6;resize:vertical}
 .actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:12px}
 button{border:0;border-radius:9px;padding:13px 17px;font-size:15px;font-weight:700;cursor:pointer;background:#f58220;color:#fff}
 button.secondary{background:#eee;color:#222}
+#result{display:none;margin-top:18px;padding:14px;border:1px solid #eee;border-radius:10px;background:#fffaf5}
+#shareLink{font-size:14px;overflow-wrap:anywhere;color:#a64c00}
 #status{min-height:24px;margin-top:12px;color:#287a39;font-size:14px}
 </style>
 </head>
 <body>
 <main>
-<h1>📚 Inserisci la panoramica</h1>
-<p>Incolla la sinossi del libro. Se vuoi, aggiungi il link Amazon: ricaveremo automaticamente il codice del libro.</p>
-<input id="amazonLink" type="url" placeholder="Link Amazon del libro (facoltativo)" autocomplete="url" style="display:block;width:100%;padding:13px;margin:0 0 12px;border:2px solid #f58220;border-radius:10px;font:16px Arial,sans-serif">
+<h1>📚 Crea il link della panoramica</h1>
+<p>Inserisci il titolo e incolla la sinossi. La pagina creerà un link pronto da copiare e aggiungere al testo del post Telegram.</p>
+<input id="bookTitle" type="text" placeholder="Titolo del libro (facoltativo)">
 <textarea id="synopsis" placeholder="TOCCA QUI E INCOLLA LA SINOSSI DEL LIBRO"></textarea>
 <div class="actions">
 <button id="paste">📋 Incolla</button>
-<button id="save">💾 Salva bozza</button>
-<button id="send">📨 Prepara invio al bot</button>
-<button id="copy" class="secondary">Copia testo</button>
+<button id="generate">🔗 Genera link sinossi</button>
 </div>
+<section id="result">
+<strong>Link pronto per Telegram</strong>
+<p id="shareLink"></p>
+<div class="actions">
+<button id="copyLink">📋 Copia link</button>
+<button id="openLink" class="secondary">Apri anteprima</button>
+</div>
+</section>
 <div id="status" role="status"></div>
 </main>
 <script>
 const area=document.getElementById("synopsis");
-const amazonLink=document.getElementById("amazonLink");
+const title=document.getElementById("bookTitle");
 const status=document.getElementById("status");
-try{area.value=localStorage.getItem("scontoClickSinossiBozza")||"";amazonLink.value=localStorage.getItem("scontoClickLinkAmazon")||"";}catch(e){}
-function isAmazonLink(value){
- try{
-  const url=new URL(value.trim());
-  const host=url.hostname.toLowerCase();
-  return host.includes("amazon.") || host==="link.amazon";
- }catch(e){return false;}
+const result=document.getElementById("result");
+let generatedUrl="";
+try{area.value=localStorage.getItem("scontoClickSinossiBozza")||"";title.value=localStorage.getItem("scontoClickTitoloBozza")||"";}catch(e){}
+function encodeText(value){
+ const bytes=new TextEncoder().encode(value);
+ let binary="";
+ for(let i=0;i<bytes.length;i++)binary+=String.fromCharCode(bytes[i]);
+ return btoa(binary).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"");
 }
 document.getElementById("paste").addEventListener("click",async()=>{
  try{area.value=await navigator.clipboard.readText();status.textContent="Sinossi incollata.";}
  catch(e){status.textContent="Tocca il riquadro della sinossi e usa Incolla.";}
 });
-document.getElementById("save").addEventListener("click",()=>{
- if(!area.value.trim()){status.textContent="Incolla prima la sinossi.";return;}
- try{localStorage.setItem("scontoClickSinossiBozza",area.value.trim());localStorage.setItem("scontoClickLinkAmazon",amazonLink.value.trim());status.textContent="Bozza salvata su questo dispositivo.";}
- catch(e){status.textContent="Salvataggio non disponibile nel browser.";}
-});
-document.getElementById("send").addEventListener("click",async()=>{
+document.getElementById("generate").addEventListener("click",()=>{
  const synopsis=area.value.trim();
- const link=amazonLink.value.trim();
- const validLink=isAmazonLink(link);
  if(!synopsis){status.textContent="Incolla prima la sinossi.";return;}
- if(!link){status.textContent="Per associare la sinossi al libro, incolla il suo link Amazon.";return;}
- if(!validLink){status.textContent="Inserisci un link Amazon valido, anche abbreviato.";return;}
- const command="/sinossi "+link+"\n"+synopsis;
- const botWindow=window.open("https://t.me/Scontoklick_bot","_blank");
- try{await navigator.clipboard.writeText(command);status.textContent="Comando copiato. Nel bot Telegram incollalo e invialo.";
-  if(!botWindow)status.textContent+=" Se non si è aperto, consenti i popup o apri @Scontoklick_bot.";
- }catch(e){area.value=command;area.select();status.textContent="Copia il comando selezionato con Ctrl+C, poi apri @Scontoklick_bot e invialo.";
-  if(!botWindow)status.textContent+=" Apri @Scontoklick_bot manualmente.";
- }
+ const payload=JSON.stringify({t:title.value.trim(),s:synopsis});
+ generatedUrl=new URL("sinossi.html",location.href).href+"#d="+encodeText(payload);
+ document.getElementById("shareLink").textContent=generatedUrl;
+ result.style.display="block";
+ try{localStorage.setItem("scontoClickSinossiBozza",synopsis);localStorage.setItem("scontoClickTitoloBozza",title.value.trim());}catch(e){}
+ status.textContent="Link creato. Ora copialo e inseriscilo nel testo del post Telegram.";
 });
-document.getElementById("copy").addEventListener("click",async()=>{
- if(!area.value.trim()){status.textContent="Non c'è testo da copiare.";return;}
- try{await navigator.clipboard.writeText(area.value);status.textContent="Testo copiato.";}
- catch(e){area.select();status.textContent="Testo selezionato: usa Ctrl+C per copiarlo.";}
+document.getElementById("copyLink").addEventListener("click",async()=>{
+ if(!generatedUrl)return;
+ try{await navigator.clipboard.writeText(generatedUrl);status.textContent="Link copiato! Incollalo nel campo URL di “Crea link” su Telegram.";}
+ catch(e){status.textContent="Seleziona il link qui sopra e copialo con Ctrl+C.";}
+});
+document.getElementById("openLink").addEventListener("click",()=>{
+ if(generatedUrl)window.open(generatedUrl,"_blank","noopener");
 });
 </script>
 </body>
