@@ -24,8 +24,7 @@ button.secondary{background:#eee;color:#222}
 <body>
 <main>
 <h1>📚 Crea il link della panoramica</h1>
-<p>Inserisci il titolo e incolla la sinossi. La pagina creerà un link pronto da copiare e aggiungere al testo del post Telegram.</p>
-<input id="bookTitle" type="text" placeholder="Titolo del libro (facoltativo)">
+<p>Incolla soltanto la descrizione. Il titolo del prodotto è già presente nel post Telegram.</p>
 <textarea id="synopsis" placeholder="TOCCA QUI E INCOLLA LA SINOSSI DEL LIBRO"></textarea>
 <div class="actions">
 <button id="paste">📋 Incolla</button>
@@ -43,7 +42,6 @@ button.secondary{background:#eee;color:#222}
 </main>
 <script>
 const area=document.getElementById("synopsis");
-const title=document.getElementById("bookTitle");
 const status=document.getElementById("status");
 const result=document.getElementById("result");
 let generatedUrl="";
@@ -56,10 +54,8 @@ function createShortId(){
 }
 function clearDraft(){
  area.value="";
- title.value="";
  try{
   localStorage.removeItem("scontoClickSinossiBozza");
-  localStorage.removeItem("scontoClickTitoloBozza");
  }catch(e){}
 }
 window.addEventListener("pagehide",clearDraft);
@@ -90,7 +86,7 @@ document.getElementById("generate").addEventListener("click",()=>{
  let form=document.getElementById("sclSubmitForm");
  if(form)form.remove();
  form=document.createElement("form");form.id="sclSubmitForm";form.method="POST";form.action=ARCHIVE_URL;form.target="sclSubmitFrame";
- const fields={id:id,t:title.value.trim(),s:synopsis};
+ const fields={id:id,t:"",s:synopsis};
  Object.entries(fields).forEach(([name,value])=>{const input=document.createElement("input");input.type="hidden";input.name=name;input.value=value;form.appendChild(input);});
  document.body.appendChild(form);
  form.submit();
