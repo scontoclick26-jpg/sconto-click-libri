@@ -24,7 +24,8 @@ button.secondary{background:#eee;color:#222}
 <body>
 <main>
 <h1>📚 Crea il link della panoramica</h1>
-<p>Incolla soltanto la descrizione. Il titolo del prodotto è già presente nel post Telegram.</p>
+<p>Inserisci il titolo del prodotto e incolla la sinossi.</p>
+<input id="productTitle" type="text" placeholder="Titolo del libro o prodotto">
 <textarea id="synopsis" placeholder="TOCCA QUI E INCOLLA LA SINOSSI DEL LIBRO"></textarea>
 <div class="actions">
 <button id="paste">📋 Incolla</button>
@@ -86,7 +87,8 @@ document.getElementById("generate").addEventListener("click",()=>{
  let form=document.getElementById("sclSubmitForm");
  if(form)form.remove();
  form=document.createElement("form");form.id="sclSubmitForm";form.method="POST";form.action=ARCHIVE_URL;form.target="sclSubmitFrame";
- const fields={id:id,t:"",s:synopsis};
+ const title=document.getElementById("productTitle").value.trim();
+ const fields={id:id,t:title,s:synopsis};
  Object.entries(fields).forEach(([name,value])=>{const input=document.createElement("input");input.type="hidden";input.name=name;input.value=value;form.appendChild(input);});
  document.body.appendChild(form);
  form.submit();
