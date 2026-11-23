@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: scontolibri-telegram-test
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: telegram-direct
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /health
+    envVars:
+      - key: BOT_TOKEN
+        sync: false
+      - key: ALLOWED_USER_ID
+        sync: false
+      - key: WEBHOOK_SECRET
+        sync: false
+      - key: PUBLIC_URL
+        sync: false
