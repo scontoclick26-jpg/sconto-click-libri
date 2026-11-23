@@ -17,3 +17,5 @@ services:
         sync: false
       - key: PUBLIC_URL
         sync: false
+      - key: CHANNEL_ID
+        sync: false
