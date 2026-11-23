@@ -95,7 +95,7 @@ function formatReviews(value) {
 function validAmazonUrl(value) {
   try {
     const u = new URL(value);
-    return u.protocol === "https:" && (/^www\.amazon\.[a-z.]+$/.test(u.hostname) || u.hostname === "amzn.to");
+    return u.protocol === "https:" && (/(^|\.)amazon\.[a-z.]+$/.test(u.hostname) || u.hostname === "amzn.to");
   } catch { return false; }
 }
 function validHttpUrl(value) {
