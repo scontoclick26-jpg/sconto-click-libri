@@ -25,6 +25,7 @@ small,.note{color:#656b73;font-size:12px;line-height:1.45}.status{font-size:13px
 <body><main class="wrap">
 <header><h1>📚 ScontoLibri</h1><p>Prepara il testo del post e condividilo su Telegram.</p></header>
 <section class="card">
+<label for="amazon">Link Amazon affiliato</label><input id="amazon" type="url" placeholder="https://www.amazon.it/...">
 <label class="check"><input id="kindle" type="checkbox"> 📲 Ebook Kindle</label>
 <label for="title">Titolo del libro</label><input id="title" placeholder="Titolo del libro">
 <div class="grid">
@@ -36,7 +37,6 @@ small,.note{color:#656b73;font-size:12px;line-height:1.45}.status{font-size:13px
 <div><label for="oldPrice">Prezzo precedente (€)</label><input id="oldPrice" inputmode="decimal" placeholder="44,90 (facoltativo)"></div>
 </div>
 <label for="synopsis">Link “Di cosa si tratta?” (facoltativo)</label><input id="synopsis" type="url" placeholder="https://...">
-<label for="amazon">Link Amazon affiliato</label><input id="amazon" type="url" placeholder="https://www.amazon.it/...">
 <p class="note">La copertina potrà apparire nell'anteprima del link Amazon quando Telegram la rende disponibile.</p>
 <button id="generate">Genera testo del post</button>
 </section>
