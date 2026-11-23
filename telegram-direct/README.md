@@ -20,7 +20,7 @@ https://link-della-panoramica
 Per un ebook Kindle, aggiungi la riga \`📲 Ebook Kindle\` subito dopo \`/pubblica\`.
 
 - Prezzo attuale e prezzo precedente: usa la virgola per i decimali.
-- Se non c'è un prezzo precedente, lascia vuota la riga (mantieni comunque la riga vuota nel messaggio).
+- Se non c'è un prezzo precedente, inserisci un trattino `-` nella riga corrispondente.
 - Valutazione: \`49\` significa 4,9.
 - Recensioni: \`1250\` viene visualizzato come 1.250.
 
