@@ -1,45 +1,55 @@
-# ScontoLibri Telegram bot (test)
+# ScontoLibri Telegram bot — inserimento guidato
 
-Bot separato per provare la pubblicazione diretta su Telegram, senza Make e senza Cloudinary. La copertina viene letta dalla pagina Amazon e inviata a Telegram come URL.
+Bot indipendente per creare e pubblicare post nel canale ScontoLibri. Non usa Make, Cloudinary o il bot già operativo.
 
-## Comando
+## Uso
 
-Invia al bot, in chat privata:
+Apri @ScontoLibriTestBot e invia `/pubblica`. Il bot chiede un dato alla volta:
 
-\`\`\`text
-/pubblica
-https://www.amazon.it/dp/ASIN
-Titolo del libro
-31,28
-44,90
-49
-1250
-https://link-della-panoramica
-\`\`\`
+1. Link Amazon affiliato
+2. Titolo del libro
+3. Ebook Kindle: sì/no
+4. Valutazione (es. `49` = 4,9)
+5. Numero recensioni (es. `1250` = 1.250)
+6. Prezzo attuale (es. `31,28`)
+7. Prezzo precedente oppure `-` se assente
+8. Link alla panoramica
 
-Per un ebook Kindle, aggiungi la riga \`📲 Ebook Kindle\` subito dopo \`/pubblica\`.
+Il bot recupera la copertina dalla pagina Amazon e mostra un'anteprima. Il post viene inviato al canale soltanto dopo aver premuto **Pubblica nel canale**. `/annulla` interrompe l'inserimento.
 
-- Prezzo attuale e prezzo precedente: usa la virgola per i decimali.
-- Se non c'è un prezzo precedente, inserisci un trattino `-` nella riga corrispondente.
-- Valutazione: \`49\` significa 4,9.
-- Recensioni: \`1250\` viene visualizzato come 1.250.
+Il post segue il formato ScontoLibri:
+- 📲 Ebook Kindle solo per gli ebook
+- Titolo e valutazione/recensioni
+- 🔎 Di cosa si tratta? collegato alla panoramica
+- Prezzo con eventuale percentuale di sconto
+- #adv
+- Pulsante 🛒 VAI ALL’OFFERTA collegato al link affiliato
+
+Se Amazon impedisce il recupero della copertina, il bot mostra l'anteprima testuale e consente comunque la pubblicazione senza immagine.
 
 ## Deploy su Render
 
-Crea un nuovo Web Service da questo repository, branch \`telegram-direct-test\`, root directory \`telegram-direct\`. Puoi usare il file \`render.yaml\` come riferimento.
+Crea un nuovo Web Service usando:
+- Repository: `scontoclick26-jpg/sconto-click-libri`
+- Branch: `telegram-direct-test`
+- Root directory: `telegram-direct`
+- Runtime: Node
+- Build command: `npm install`
+- Start command: `npm start`
 
-Imposta queste variabili d'ambiente su Render:
-- \`BOT_TOKEN\`: token del NUOVO bot creato con @BotFather.
-- \`ALLOWED_USER_ID\`: ID numerico Telegram dell'utente autorizzato.
-- \`WEBHOOK_SECRET\`: stringa casuale di almeno 32 caratteri, solo lettere, numeri, trattini e underscore.
-- \`PUBLIC_URL\`: URL HTTPS pubblico del servizio Render, senza slash finale.
+Imposta le variabili d'ambiente su Render:
+- `BOT_TOKEN`: token di @ScontoLibriTestBot (solo su Render, mai su GitHub o in chat)
+- `ALLOWED_USER_ID`: ID numerico Telegram dell'utente autorizzato
+- `WEBHOOK_SECRET`: stringa casuale di almeno 32 caratteri, solo lettere, numeri, trattini e underscore
+- `PUBLIC_URL`: URL HTTPS del servizio Render, senza slash finale (oppure lascia che Render fornisca `RENDER_EXTERNAL_URL`)
+- `CHANNEL_ID`: username pubblico del canale (es. `@nomecanale`) oppure ID numerico del canale
 
-Il server configura automaticamente il webhook Telegram all'avvio. Non inserire mai token o segreti nei file GitHub.
+Aggiungi @ScontoLibriTestBot al canale ScontoLibri come amministratore con il permesso di pubblicare messaggi. Il bot non può pubblicare finché questo passaggio non è completato.
 
-## Note
+## Sicurezza e isolamento
 
-- Il bot accetta solo messaggi privati dall'ID autorizzato.
-- Il bot pubblica solo nella chat privata di test: non invia nulla al canale.
-- La copertina Amazon viene recuperata dalla pagina prodotto. Amazon può limitare le richieste automatiche; in quel caso il bot segnala che non ha trovato la copertina.
-- Il piano gratuito Render può sospendere il servizio dopo inattività e il risveglio può ritardare la risposta. È adatto ai test, non garantisce disponibilità continua.
-- Usa un bot Telegram nuovo: un bot già collegato al webhook di Make non può ricevere contemporaneamente gli stessi aggiornamenti su un secondo servizio.
+- Il bot risponde soltanto all'ID Telegram indicato in `ALLOWED_USER_ID` e solo in chat privata.
+- Token e segreti non devono mai essere inseriti nei file del repository.
+- Il codice è nel branch separato `telegram-direct-test`; non modifica il bot esistente né gli scenari Make.
+- Le sessioni di inserimento sono mantenute in memoria: un riavvio del servizio interrompe l'eventuale inserimento in corso.
+- Il piano gratuito Render può sospendere il servizio dopo inattività e ritardare la prima risposta.
