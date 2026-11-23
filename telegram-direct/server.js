@@ -104,7 +104,7 @@ function parseCommand(text) {
   if (!/^https?:\/\//i.test(synopsisUrl)) throw new Error("Il link della panoramica non è valido.");
   if (!title || title.length > 180) throw new Error("Titolo mancante o troppo lungo.");
   const current = parseAmount(currentRaw);
-  const previous = previousRaw ? parseAmount(previousRaw) : null;
+  const previous = previousRaw && previousRaw !== "-" ? parseAmount(previousRaw) : null;
   const discount = previous && previous > current ? Math.round((1 - current / previous) * 100) : 0;
   const priceLine = previous && previous > current
     ? \`⭕️ <b>\${euro(current)}€</b> anziché <s>\${euro(previous)}€</s> (-\${discount}%)\`
