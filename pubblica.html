@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#f47721">
+<title>Prepara post · ScontoLibri</title>
+<style>
+:root{font-family:system-ui,-apple-system,Segoe UI,sans-serif;color:#202124;background:#f5f6f8}
+*{box-sizing:border-box}body{margin:0;padding:20px 14px 40px}.wrap{max-width:620px;margin:auto}
+header{padding:18px 4px 14px}h1{font-size:25px;margin:0 0 5px}header p{margin:0;color:#60656d;font-size:14px}
+.card{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:17px;margin:12px 0;box-shadow:0 3px 12px #00000008}
+label{display:block;font-size:13px;font-weight:650;margin:13px 0 6px}
+input,textarea{width:100%;font:inherit;font-size:16px;padding:12px;border:1px solid #d5d9df;border-radius:10px;background:#fff;color:#202124}
+textarea{min-height:72px;resize:vertical}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.check{display:flex;align-items:center;gap:9px;font-weight:600;font-size:14px}.check input{width:18px;height:18px}
+button{width:100%;border:0;border-radius:11px;padding:14px 16px;font:700 15px system-ui;cursor:pointer;margin-top:10px;background:#f47721;color:#fff}
+button.secondary{background:#222b36}button.light{background:#fff;color:#222;border:1px solid #d5d9df}
+#preview{white-space:pre-wrap;overflow-wrap:anywhere;background:#f7f8fa;border-radius:10px;padding:13px;font-size:14px;line-height:1.55;min-height:100px}
+small,.note{color:#656b73;font-size:12px;line-height:1.45}.status{font-size:13px;color:#267347;min-height:18px;margin-top:8px}
+#coverPreview{max-width:150px;max-height:190px;object-fit:contain;display:none;margin-top:10px;border-radius:8px}
+@media(max-width:420px){.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body><main class="wrap">
+<header><h1>📚 ScontoLibri</h1><p>Prepara il testo del post e condividilo su Telegram.</p></header>
+<section class="card">
+<label class="check"><input id="kindle" type="checkbox"> 📲 Ebook Kindle</label>
+<label for="title">Titolo del libro</label><input id="title" placeholder="Titolo del libro">
+<div class="grid">
+<div><label for="rating">Valutazione (es. 49 = 4,9)</label><input id="rating" inputmode="decimal" placeholder="49"></div>
+<div><label for="reviews">Numero recensioni</label><input id="reviews" inputmode="numeric" placeholder="1250"></div>
+</div>
+<div class="grid">
+<div><label for="price">Prezzo attuale (€)</label><input id="price" inputmode="decimal" placeholder="31,28"></div>
+<div><label for="oldPrice">Prezzo precedente (€)</label><input id="oldPrice" inputmode="decimal" placeholder="44,90 (facoltativo)"></div>
+</div>
+<label for="synopsis">Link “Di cosa si tratta?” (facoltativo)</label><input id="synopsis" type="url" placeholder="https://...">
+<label for="amazon">Link Amazon affiliato</label><input id="amazon" type="url" placeholder="https://www.amazon.it/...">
+<label for="cover">Copertina salvata sul telefono</label><input id="cover" type="file" accept="image/*">
+<img id="coverPreview" alt="Anteprima copertina">
+<p class="note">La pagina non può estrarre automaticamente l'immagine dalla pagina Amazon. Apri il prodotto, salva la copertina sul telefono e selezionala qui.</p>
+<button id="generate">Genera testo del post</button>
+</section>
+<section class="card">
+<strong>Anteprima del post</strong>
+<div id="preview" style="margin-top:10px">Compila i dati e premi “Genera testo del post”.</div>
+<button id="copy">Copia testo</button>
+<button id="share" class="secondary">Condividi testo e copertina su Telegram</button>
+<button id="openAmazon" class="light">Apri link Amazon</button>
+<div id="status" class="status" role="status"></div>
+<p class="note">La condivisione dipende dalle funzioni disponibili sul telefono. Se Telegram non compare, copia il testo, apri il canale e allega manualmente la copertina.</p>
+</section>
+<section class="card">
+<strong>Nota importante</strong>
+<p class="note">Senza bot puoi pubblicare direttamente dal canale, ma Telegram non permette di creare un pulsante personalizzato “VAI ALL’OFFERTA” dal normale composer. Il link Amazon resta cliccabile nel testo del post.</p>
+</section>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let generated="", coverFile=null;
+const euro=s=>{let n=Number(String(s).trim().replace(/\./g,"").replace(",", "."));if(!Number.isFinite(n)||n<=0)throw Error("Inserisci un prezzo valido.");return n.toLocaleString("it-IT",{minimumFractionDigits:2,maximumFractionDigits:2})};
+function makePost(){
+ const title=$("title").value.trim(),price=$("price").value.trim(),old=$("oldPrice").value.trim(),rate=$("rating").value.trim(),reviews=$("reviews").value.trim(),syn=$("synopsis").value.trim(),amazon=$("amazon").value.trim();
+ if(!title||!price||!rate||!reviews||!amazon)throw Error("Compila titolo, prezzo, valutazione, recensioni e link Amazon.");
+ if(!/^https?:\/\//i.test(amazon))throw Error("Inserisci un link Amazon valido.");
+ if(syn&&!/^https?:\/\//i.test(syn))throw Error("Il link della panoramica non è valido.");
+ const rv=Number(rate.replace(",","."));
+ const rating=rate.length===2&&!rate.includes(".")?Number(rate[0]+"."+rate[1]):rv;
+ if(!Number.isFinite(rating)||rating<0||rating>5)throw Error("Valutazione non valida: usa ad esempio 49 per 4,9.");
+ const count=Number(reviews.replace(/[.\s]/g,""));
+ if(!Number.isInteger(count)||count<0)throw Error("Numero recensioni non valido.");
+ const current=euro(price);
+ let priceLine="⭕️ Solo "+current+"€";
+ if(old){const previous=euro(old),p=Number(price.replace(/\./g,"").replace(",",".")),o=Number(old.replace(/\./g,"").replace(",","."));if(o>p){const discount=Math.round((1-p/o)*100);priceLine="⭕️ "+current+"€ anziché "+previous+"€ (-"+discount+"%)";}}
+ const lines=[];
+ if($("kindle").checked)lines.push("📲 Ebook Kindle");
+ lines.push("📚 "+title,"","⭐️⭐️⭐️⭐️⭐️ "+rating.toLocaleString("it-IT",{minimumFractionDigits:1,maximumFractionDigits:1})+" ("+count.toLocaleString("it-IT")+")");
+ if(syn)lines.push("🔎 Di cosa si tratta? "+syn);
+ lines.push("",priceLine,"",amazon,"","#adv");
+ return lines.join("\n");
+}
+$("generate").addEventListener("click",()=>{try{generated=makePost();$("preview").textContent=generated;$("status").textContent="Testo pronto. Puoi copiarlo o condividerlo."; }catch(e){$("status").textContent=e.message;}});
+$("copy").addEventListener("click",async()=>{if(!generated){$("generate").click();if(!generated)return;}try{await navigator.clipboard.writeText(generated);$("status").textContent="Testo copiato. Apri il canale e incollalo.";}catch(e){$("status").textContent="Copia non disponibile: seleziona il testo nell’anteprima.";}});
+$("cover").addEventListener("change",()=>{coverFile=$("cover").files[0]||null;const img=$("coverPreview");if(coverFile){img.src=URL.createObjectURL(coverFile);img.style.display="block";}else{img.style.display="none";}});
+$("share").addEventListener("click",async()=>{if(!generated){$("generate").click();if(!generated)return;}try{if(coverFile&&navigator.canShare&&navigator.canShare({files:[coverFile]})){await navigator.share({text:generated,files:[coverFile],title:"Post ScontoLibri"});}else if(navigator.share){await navigator.share({text:generated,title:"Post ScontoLibri"});$("status").textContent="Testo condiviso. Aggiungi la copertina in Telegram se necessario.";}else{$("status").textContent="Condivisione non supportata: copia il testo e allega la copertina manualmente.";}}catch(e){if(e.name!=="AbortError")$("status").textContent="Condivisione non riuscita. Copia il testo e allega la copertina manualmente.";}});
+$("openAmazon").addEventListener("click",()=>{const url=$("amazon").value.trim();if(/^https?:\/\//i.test(url))window.open(url,"_blank","noopener");else $("status").textContent="Inserisci prima il link Amazon.";});
+</script></body></html>
