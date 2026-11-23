@@ -37,19 +37,19 @@ small,.note{color:#656b73;font-size:12px;line-height:1.45}.status{font-size:13px
 </div>
 <label for="synopsis">Link “Di cosa si tratta?” (facoltativo)</label><input id="synopsis" type="url" placeholder="https://...">
 <label for="amazon">Link Amazon affiliato</label><input id="amazon" type="url" placeholder="https://www.amazon.it/...">
-<label for="cover">Copertina salvata sul telefono</label><input id="cover" type="file" accept="image/*">
+<label for="cover">Immagine (non necessaria)</label><input id="cover" type="file" accept="image/*">
 <img id="coverPreview" alt="Anteprima copertina">
-<p class="note">La pagina non può estrarre automaticamente l'immagine dalla pagina Amazon. Apri il prodotto, salva la copertina sul telefono e selezionala qui.</p>
+<p class="note">La copertina viene mostrata tramite l'anteprima del link Amazon in Telegram, quando disponibile. Non serve scaricare immagini.</p>
 <button id="generate">Genera testo del post</button>
 </section>
 <section class="card">
 <strong>Anteprima del post</strong>
 <div id="preview" style="margin-top:10px">Compila i dati e premi “Genera testo del post”.</div>
 <button id="copy">Copia testo</button>
-<button id="share" class="secondary">Condividi testo e copertina su Telegram</button>
+<button id="share" class="secondary">Condividi testo su Telegram</button>
 <button id="openAmazon" class="light">Apri link Amazon</button>
 <div id="status" class="status" role="status"></div>
-<p class="note">La condivisione dipende dalle funzioni disponibili sul telefono. Se Telegram non compare, copia il testo, apri il canale e allega manualmente la copertina.</p>
+<p class="note">Telegram genera l'anteprima del link Amazon quando disponibile. Se non compare, tocca il link nel messaggio e verifica che l'anteprima sia attiva.</p>
 </section>
 <section class="card">
 <strong>Nota importante</strong>
@@ -75,9 +75,9 @@ function makePost(){
  if(old){const previous=euro(old),p=Number(price.replace(/\./g,"").replace(",",".")),o=Number(old.replace(/\./g,"").replace(",","."));if(o>p){const discount=Math.round((1-p/o)*100);priceLine="⭕️ "+current+"€ anziché "+previous+"€ (-"+discount+"%)";}}
  const lines=[];
  if($("kindle").checked)lines.push("📲 Ebook Kindle");
- lines.push("📚 "+title,"","⭐️⭐️⭐️⭐️⭐️ "+rating.toLocaleString("it-IT",{minimumFractionDigits:1,maximumFractionDigits:1})+" ("+count.toLocaleString("it-IT")+")");
+ lines.push("📚 "+title,amazon,"","⭐️⭐️⭐️⭐️⭐️ "+rating.toLocaleString("it-IT",{minimumFractionDigits:1,maximumFractionDigits:1})+" ("+count.toLocaleString("it-IT")+")");
  if(syn)lines.push("🔎 Di cosa si tratta? "+syn);
- lines.push("",priceLine,"",amazon,"","#adv");
+ lines.push("",priceLine,"","#adv");
  return lines.join("\n");
 }
 $("generate").addEventListener("click",()=>{try{generated=makePost();$("preview").textContent=generated;$("status").textContent="Testo pronto. Puoi copiarlo o condividerlo."; }catch(e){$("status").textContent=e.message;}});
